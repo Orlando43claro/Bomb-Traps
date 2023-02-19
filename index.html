@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<head><title></title>
+<head><title>developer</title>
 
 <style>
 *{padding: 0;
@@ -8,17 +8,19 @@ margin: 0;
 }
 
 body{width:100%; height: 100%; background: #ffffff;}
-  
- .section01{margin: 2px;  height: 12px; width:80%; }
-.section01 img{ height: 12px; float: right;} 
+   
+.section01{margin: 2px;  height: 12px; width:80%; }
+.section01 img{ height: 12px; float: right;}
 
+  
 .container{ 
 height: 150px; width:100%;}
 
-#section1{
+#section1{text-align: center;
 width:44%; height: 150px; float: right; }
-#section1 img{border: 1px solid black; border-radius: 10px; padding: 5px; margin: 10px; }
+#section1 img{border:  1px solid black; border-radius: 10px;  text-align: center;}
 
+  
 #section2{
 width:55%; height: 100px;}
 #titulo{ padding: 15px; margin: 10px; text-align: center;}
@@ -32,23 +34,77 @@ width:55%; height: 49px; display: flex;}
 
 
 
-.nav{ width: 90%; height: 40px; margin: 10px; 10px; text-align: center;}
-.nav a{display: block; width: 80px; height: 18px; padding: 5px; background: #008000; border-radius: 10px; color: #ffffff;  text-decoration: none; float: right;}
+.nav{width:100%; height: 30px; text-align: center;}
 
+.nav a{display: block; text-decoration: none;
+    font-size: 16px; /* Tamaño de letra */
+    text-transform: uppercase; /* Letras en mayúscula */
+    background: #6B3618; /* Color de fondo */
+    padding: 10px 15px; /* Relleno */
+    margin: 10px;
+    color: #FFD059; /* Color de texto */
+    border-bottom: solid 2px #FFD059; /* Borde inferior */
+    border-radius: 10px; color: #ffffff;  }
 
-.main{   width:100%;  max-height: 160px;  display: flex; overflow-x: auto;}
-#section6 img{ border: 1px solid black; height: 130px; width: 200px;  display: flex;}
+  #section03{
+width:100%; height: 49px; display: flex;}
+#section08{ width:10%;}
+  
+#section04{ width:50%; height: 49px; padding: 2px; 49px; float: right; margin: 10px; text-align: center;}
+
+#section05{width:50%; height: 49px; float: right; margin: 10px; text-align: center;}
+#section05 a{display: block; text-decoration: none;
+    font-size: 14px; /* Tamaño de letra */
+    text-transform: uppercase; /* Letras en mayúscula */
+    background: #6B3618; /* Color de fondo */
+    padding: 10px 15px; /* Relleno */
+    margin: 1px;
+    color: #FFD059; /* Color de texto */
+    border-bottom: solid 2px #FFD059; /* Borde inferior */
+    border-radius: 10px; color: #ffffff;  }
+
+  
+.main{   width:100%;  max-height: 220px;  display: flex; overflow-x: auto;}
+#section6 img{ border: 1px solid black; border-radius: 10px; height: 130px; width: 200px;  display: flex;}
 #section6{ margin: 5px; border-radius: 10px;  display: flex;}
+
+#section66 img{ border: 1px solid black; border-radius: 10px; height: 200px; width: 200px;  display: flex;}
+#section66{ margin: 5px; border-radius: 10px;  display: flex;}
 
 .footer{ width:90%; height: 100%; margin: 10px; }
 p{padding: 10px; }
+   
+.version{ width:90%; height: 40px; }
+   
+ 
+
+header1{display: flex; width:100%;}
+
+.logo1{ padding: 15px; width:10px;}
+.log1 { height 30px; width:30px; }
+.log1 img{  height: 30px; width:30px;}
+
+
+.nombre1{ padding: 20px; height 30px; width:100%;}
+.nombre1 p{font-size: 12px; }
+  
+  header{ display: flex; height 60px; width:100%;}
+
+.logo{ padding: 15px; width:70px;}
+.log {height 60px; width:60px; text-align: center;}
+.log img{border:1px solid black; border-radius: 10px; height: 60px; width:60px;}
+
+.nombre{height 50px; width:100%;}
+.nombre p{font-size: 12px; }   
+   
 </style>
 </head>
 <body>
-  
+
 <section class="section01">
  <img style="border: 0px solid; display: inline;" alt="contador de visitas" src="https://websmultimedia.com/contador-de-visitas.php?id=6667">
- </section>  
+ </section> 
+
   
 <div class="container">
 <section id="section1"><img src="ico.webp" width="110"  height="110">
@@ -58,18 +114,25 @@ p{padding: 10px; }
 </section>
 
 <section id="section3">
-<div id="section4">Versión<br>1.0.9
+<div id="section4">Versión<br><h5>1.0.9(9)</h5>
 </div>
 <div id="linea"></div>
-<div id="section5">Tamaño<br>8MB
+<div id="section5">Tamaño<br><h5>8.04 MB</h5>
 </div>
 </section>
 </div>
 
 <div class="nav"> 
-<a download="bomb traps"href="Bomb Traps_1.0.9_developer-shop.apk"><center>Descargar</center></a>
+<a href="Bomb Traps_1.0.9_developer-shop.apk" download="bomb traps_developer-shop" ><center>Descargar</center></a>
 </div>
-
+<section id="section03">
+<div id="section08">
+</div>
+<div id="section04"><b>Calificación:</b><br>4.5<img src="19.png">
+</div>
+<div id="section05"><a href="comentarios.html" ><center>Comentarios</center></a> 
+</div>
+</section>
 <div class="main">
 
 <section id="section6">
@@ -90,13 +153,81 @@ p{padding: 10px; }
 <section id="section6">
 <img src="img11.webp" >
 </section>
-
 </div>
 
 <div class="footer">
 <p>
-<h4>Descripción:</h4><br>Juego libre de Trampa bomba jugó desconectado.</p>
+<h4>Descripción:</h4><br><p>Bomb es uno de mis primeros juegos. El juego es similar al clásico de bombas y boom.
+Recoge potenciadores para obtener bombas más poderosas. Usa las bombas explosivas como trampas para destruir a los zombis. Son muy concurridos y agresivos. Debes esquivarlos y usar bombas para destruirlos a todos. Con cada palanca obtendrás 3 corazones.
+Este es un juego fuera de línea. En esta versión, simplemente matas a los zombis, monstruos para ganar controlando a un hombre.
+Juego clásico, con controles pulidos para pantalla táctil..</p>
 
 </div>
+   
+<div class="footer">
+<p><pre>
+<h4>  Datos del desarrollador</h4></pre>
+</div>
+
+<header1>
+<div class="logo1">
+<div class="log1">
+<img src=" desarrollador.png" >
+</div>
+</div>
+<div class="nombre1">
+XGAME9X
+</div>
+</header1>
+
+<header1>
+<div class="logo1">
+<div class="log1">
+<img src="email.png" >
+</div>
+</div>
+<div class="nombre1">
+hotro.cafeit@gmail.com
+</div>
+</header1>
+
+<header1>
+<div class="logo1">
+<div class="log1">
+<a href="https://tin123.net"><img src="web.png " ></a>
+</div>
+</div>
+<div class="nombre1">
+https://tin123.net
+</div>
+</header1> 
+
+
+<header1>
+<div class="logo1">
+<div class="log1">
+<a href=" http://xgame9x.blogspot.com/2015/08/privacy-policy-for-android-application.html"><img src="privacidad.png " ></a>
+</div>
+</div>
+<div class="nombre1">
+Politica de privacidad 
+</div>
+</header1>      
+   
+<header1>
+<div class="logo1">
+<div class="log1">
+<a href="https://play.google.com/store/apps/details?id=com.wapmelinh.datbom&ref=apkcombo.com"><img src="play.jpg " ></a>
+</div>
+</div>
+<div class="nombre1">
+Google Play ID
+</div>
+</header1> 
+
+
+
+
+
 </body>
 </html>
