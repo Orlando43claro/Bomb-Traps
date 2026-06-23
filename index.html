@@ -60,7 +60,7 @@
             font-size: clamp(1em, 3vw, 1.2em);
         }
 
-        /* Tabla de posiciones del grupo */
+        /* Tabla de posiciones de grupos */
         .group-table {
             width: 100%;
             border-collapse: collapse;
@@ -69,7 +69,7 @@
         }
 
         .group-table th, .group-table td {
-            padding: 5px 3px;
+            padding: 6px 4px;
             text-align: center;
         }
 
@@ -97,7 +97,7 @@
             font-weight: bold;
         }
 
-        /* Estilos de Partidos */
+        /* Estilos de eliminatorias directas */
         .match-gallery {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -110,7 +110,7 @@
             object-fit: cover;
             border-radius: 6px;
             cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s, opacity 0.5s, width 0.5s;
+            transition: transform 0.3s, box-shadow 0.3s, opacity 0.5s, width 0.5s, padding 0.5s;
         }
         
         .match-gallery img.eliminated {
@@ -166,14 +166,14 @@
             color: #ffd700;
         }
 
-        /* Centro de resultados temporales de la jornada */
+        /* Contenedor de resultados de la jornada */
         .ticker-container {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
             border-radius: 6px;
             margin-top: 10px;
-            font-size: 12px;
-            color: #ddd;
+            font-size: 11px;
+            color: #ccc;
             text-align: left;
             max-height: 80px;
             overflow-y: auto;
@@ -190,27 +190,69 @@
             cursor: pointer;
         }
 
-        #champion-history { margin-top: 20px; }
-        #champion-list { list-style: none; padding: 0; max-width: 600px; margin: 0 auto; }
+        /* --- CORRECCIÓN HISTORIAL CAMPEONES --- */
+        #champion-history {
+            margin-top: 30px;
+        }
+
+        #champion-list {
+            list-style: none;
+            padding: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            max-height: 380px;    /* Límite de altura para móviles y escritorio */
+            overflow-y: auto;     /* Activa scroll interno */
+            padding-right: 5px;
+        }
+
         #champion-list li {
             background: rgba(255, 255, 255, 0.1);
             margin: 8px 0;
-            padding: 8px;
+            padding: 10px;
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
             font-size: clamp(12px, 2.5vw, 14px);
         }
+
         #champion-list li.gold { background: rgba(255, 215, 0, 0.2); border: 2px solid #ffd700; }
         #champion-list li.silver { background: rgba(192, 192, 192, 0.2); border: 2px solid #c0c0c0; }
         #champion-list li.bronze { background: rgba(205, 127, 50, 0.2); border: 2px solid #cd7f32; }
-        #champion-list img.trophy { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
-        .trophy-history { font-weight: bold; color: #f4a261; }
 
+        #champion-list img.trophy {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+        }
+        
+        #champion-list .trophy-history {
+            font-weight: bold;
+            color: #f4a261;
+            font-size: 11px;
+            max-width: 55%;
+            text-align: right;
+            word-break: break-word; /* Salto de línea limpio para listas de más de 30 títulos */
+        }
+
+        /* --- RESPONSIVE / MEDIA QUERIES --- */
         @media (max-width: 768px) {
-            .group-container { flex-direction: column; }
-            #left-groups, #right-groups { width: 100%; }
+            .group-container {
+                flex-direction: column; /* Apila los grupos hacia abajo de manera limpia */
+                gap: 15px;
+            }
+            #left-groups, #right-groups {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .group, .match {
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -261,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     let currentPhase = 'groups';
-    let groups = []; // Guardará objetos con { name, teams: [...], round: 0, fixtures: [...], ticker: [] }
+    let groups = []; 
     let currentPhaseParticipants = []; 
     let tournamentNumber = 1;
     let championsData = {}; 
@@ -300,13 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     };
 
-    // --- GENERAR CALENDARIO ROUND ROBIN (3 JORNADAS) ---
     const generateFixtures = () => {
-        // Para 4 equipos (0, 1, 2, 3), las 3 jornadas fijas:
         return [
-            [[0, 1], [2, 3]], // Jornada 1
-            [[0, 2], [1, 3]], // Jornada 2
-            [[0, 3], [1, 2]]  // Jornada 3
+            [[0, 1], [2, 3]], 
+            [[0, 2], [1, 3]], 
+            [[0, 3], [1, 2]]  
         ];
     };
 
@@ -324,9 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
             groups.push({
                 name: groupNames[i],
                 teams: groupTeams,
-                round: 0, // Controla las jornadas jugadas (máximo 3)
+                round: 0, 
                 fixtures: generateFixtures(),
-                ticker: [] // Historial de partidos impresos
+                ticker: [] 
             });
         }
         currentPhase = 'groups';
@@ -345,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group';
             
-            // Ordenar tabla de posiciones: Puntos -> Diferencia Goles -> Goles Favor -> Alfabético
             const sortedTeams = [...group.teams].sort((a, b) => {
                 if (b.pts !== a.pts) return b.pts - a.pts;
                 if (b.dg !== a.dg) return b.dg - a.dg;
@@ -353,10 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             let roundText = group.round >= 3 ? "Finalizado" : `Jornada ${group.round}/3`;
-
             groupDiv.innerHTML = `<h2>${group.name} (${roundText})</h2>`;
             
-            // Crear Estructura de Tabla
             const table = document.createElement('table');
             table.className = 'group-table';
             table.innerHTML = `
@@ -374,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const tbody = table.querySelector('tbody');
             sortedTeams.forEach((team, idx) => {
                 const tr = document.createElement('tr');
-                // Resaltar los 2 primeros puestos clasificados
                 if (group.round >= 3 && idx < 2) tr.className = 'classified';
 
                 tr.innerHTML = `
@@ -397,7 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             groupDiv.appendChild(table);
 
-            // Ticker de partidos jugados recientemente
             if (group.ticker.length > 0) {
                 const tickerDiv = document.createElement('div');
                 tickerDiv.className = 'ticker-container';
@@ -496,9 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA PRINCIPAL (Jugar) ---
     deleteBtn.addEventListener('click', () => {
         if (currentPhase === 'groups') {
-            // Comprobar si ya terminamos todas las jornadas
             if (groups[0].round >= 3) {
-                // Sacar los 2 mejores de cada grupo para Octavos
                 let octavosParticipants = [];
                 groups.forEach(group => {
                     const sorted = [...group.teams].sort((a, b) => {
@@ -506,28 +539,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (b.dg !== a.dg) return b.dg - a.dg;
                         return b.gf - a.gf;
                     });
-                    octavosParticipants.push(sorted[0], sorted[1]); // Clasifican 1ro y 2do
+                    octavosParticipants.push(sorted[0], sorted[1]); 
                 });
                 
-                // Pasamos directos a Octavos cruzando los grupos de forma aleatoria u ordenada
                 loadEliminatories('octavos', shuffleArray(octavosParticipants));
                 return;
             }
 
-            // Simular la siguiente jornada para TODOS los grupos
             groups.forEach(group => {
                 const currentRoundMatches = group.fixtures[group.round];
-                group.ticker = [`<b>Jornada ${group.round + 1}:</b>`]; // Limpiar e inicializar ticker
+                group.ticker = [`<b>Jornada ${group.round + 1}:</b>`]; 
 
                 currentRoundMatches.forEach(match => {
                     const teamA = group.teams[match[0]];
                     const teamB = group.teams[match[1]];
 
-                    // Simular goles aleatorios (Ej: 0 a 4 goles)
                     const golesA = Math.floor(Math.random() * 4);
                     const golesB = Math.floor(Math.random() * 4);
 
-                    // Actualizar estadísticas individuales
                     teamA.gf += golesA; teamA.gc += golesB; teamA.dg = teamA.gf - teamA.gc;
                     teamB.gf += golesB; teamB.gc += golesA; teamB.dg = teamB.gf - teamB.gc;
 
@@ -549,14 +578,12 @@ document.addEventListener('DOMContentLoaded', () => {
             saveToLocalStorage();
             renderGroupsFromState();
 
-            // Si fue la última jornada, cambiamos el texto del botón para guiar al usuario
             if (groups[0].round >= 3) {
                 deleteBtn.textContent = "Ir a Octavos";
                 deleteBtn.style.backgroundColor = "#4ad66d";
             }
 
         } else {
-            // Lógica de Eliminación Directa
             deleteBtn.textContent = "Jugar";
             deleteBtn.style.backgroundColor = "#e63946";
 
