@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campeonato Mundial</title>
+    <title>Campeonato Mundial Pro</title>
     <style>
         * {
             margin: 0;
@@ -60,7 +60,6 @@
             font-size: clamp(1em, 3vw, 1.2em);
         }
 
-        /* Tabla de posiciones de grupos */
         .group-table {
             width: 100%;
             border-collapse: collapse;
@@ -85,6 +84,10 @@
             gap: 6px;
         }
 
+        .group-table img, .match-gallery img {
+            cursor: pointer;
+        }
+
         .group-table img {
             width: 20px;
             height: 20px;
@@ -97,11 +100,27 @@
             font-weight: bold;
         }
 
-        /* Estilos de eliminatorias directas */
         .match-gallery {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .match-team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45%;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .match-team:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .match-gallery img {
@@ -109,15 +128,20 @@
             height: 50px;
             object-fit: cover;
             border-radius: 6px;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s, opacity 0.5s, width 0.5s, padding 0.5s;
+            transition: opacity 0.5s, width 0.5s;
         }
         
-        .match-gallery img.eliminated {
-            opacity: 0;
-            width: 0px;
-            padding: 0;
-            pointer-events: none;
+        .match-team.eliminated img {
+            opacity: 0.2;
+        }
+
+        .match-team span {
+            font-size: 12px;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         #delete-btn {
@@ -131,13 +155,7 @@
             font-size: clamp(14px, 3vw, 18px);
             border-radius: 50%;
             cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
             z-index: 1000;
-        }
-
-        #delete-btn:hover {
-            background-color: #ff4d5a;
-            transform: scale(1.1);
         }
 
         #fullscreen-container {
@@ -147,7 +165,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             align-items: center;
             justify-content: center;
             flex-direction: column;
@@ -156,17 +174,43 @@
         }
 
         #fullscreen-container img {
-            max-width: 90%;
-            max-height: 60%;
+            max-width: 80%;
+            max-height: 40%;
             border-radius: 8px;
         }
 
-        #fullscreen-container h2 {
+        .profile-card {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 450px;
             margin-top: 15px;
-            color: #ffd700;
+            border: 1px solid #ffd700;
+            text-align: left;
         }
 
-        /* Contenedor de resultados de la jornada */
+        .profile-card h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .stats-scroll {
+            max-height: 180px;
+            overflow-y: auto;
+            font-size: 12px;
+            padding-right: 5px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
         .ticker-container {
             background: rgba(0, 0, 0, 0.4);
             padding: 8px;
@@ -185,24 +229,18 @@
             background: #f4a261;
             border: none;
             color: white;
-            font-size: clamp(12px, 2.5vw, 16px);
             border-radius: 4px;
             cursor: pointer;
         }
 
-        /* --- CORRECCIÓN HISTORIAL CAMPEONES --- */
-        #champion-history {
-            margin-top: 30px;
-        }
-
+        #champion-history { margin-top: 30px; }
         #champion-list {
             list-style: none;
             padding: 0;
             max-width: 600px;
             margin: 0 auto;
-            max-height: 380px;    /* Límite de altura para móviles y escritorio */
-            overflow-y: auto;     /* Activa scroll interno */
-            padding-right: 5px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         #champion-list li {
@@ -221,38 +259,12 @@
         #champion-list li.silver { background: rgba(192, 192, 192, 0.2); border: 2px solid #c0c0c0; }
         #champion-list li.bronze { background: rgba(205, 127, 50, 0.2); border: 2px solid #cd7f32; }
 
-        #champion-list img.trophy {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            cursor: pointer;
-            object-fit: cover;
-        }
-        
-        #champion-list .trophy-history {
-            font-weight: bold;
-            color: #f4a261;
-            font-size: 11px;
-            max-width: 55%;
-            text-align: right;
-            word-break: break-word; /* Salto de línea limpio para listas de más de 30 títulos */
-        }
+        #champion-list img.trophy { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; cursor: pointer;}
+        #champion-list .trophy-history { font-weight: bold; color: #f4a261; font-size: 11px; max-width: 55%; text-align: right; word-break: break-word; }
 
-        /* --- RESPONSIVE / MEDIA QUERIES --- */
         @media (max-width: 768px) {
-            .group-container {
-                flex-direction: column; /* Apila los grupos hacia abajo de manera limpia */
-                gap: 15px;
-            }
-            #left-groups, #right-groups {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-            }
-            .group, .match {
-                padding: 12px;
-            }
+            .group-container { flex-direction: column; gap: 15px; }
+            #left-groups, #right-groups { width: 100%; display: flex; flex-direction: column; gap: 15px; }
         }
     </style>
 </head>
@@ -305,8 +317,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPhase = 'groups';
     let groups = []; 
     let currentPhaseParticipants = []; 
+    let losersSemifinal = []; 
+    let finalParticipants = []; 
+    let thirdPlaceWinner = null;
     let tournamentNumber = 1;
     let championsData = {}; 
+    let h2hMatches = {}; 
+
     const groupNames = ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo D', 'Grupo E', 'Grupo F', 'Grupo G', 'Grupo H'];
 
     const saveToLocalStorage = () => {
@@ -314,21 +331,23 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('champions', JSON.stringify(championsData));
         localStorage.setItem('currentPhase', currentPhase);
         localStorage.setItem('currentPhaseParticipants', JSON.stringify(currentPhaseParticipants));
+        localStorage.setItem('losersSemifinal', JSON.stringify(losersSemifinal));
+        localStorage.setItem('finalParticipants', JSON.stringify(finalParticipants));
+        localStorage.setItem('thirdPlaceWinner', JSON.stringify(thirdPlaceWinner));
         localStorage.setItem('groups', JSON.stringify(groups));
+        localStorage.setItem('h2hMatches', JSON.stringify(h2hMatches));
     };
 
     const loadFromLocalStorage = () => {
-        const savedTournament = localStorage.getItem('tournamentNumber');
-        if (savedTournament) tournamentNumber = parseInt(savedTournament);
-        const savedChampions = localStorage.getItem('champions');
-        if (savedChampions) championsData = JSON.parse(savedChampions);
-        const savedPhase = localStorage.getItem('currentPhase');
-        const savedParticipants = localStorage.getItem('currentPhaseParticipants');
-        const savedGroups = localStorage.getItem('groups');
-
-        if (savedPhase) currentPhase = savedPhase;
-        if (savedParticipants) currentPhaseParticipants = JSON.parse(savedParticipants);
-        if (savedGroups) groups = JSON.parse(savedGroups);
+        if (localStorage.getItem('tournamentNumber')) tournamentNumber = parseInt(localStorage.getItem('tournamentNumber'));
+        if (localStorage.getItem('champions')) championsData = JSON.parse(localStorage.getItem('champions'));
+        if (localStorage.getItem('currentPhase')) currentPhase = localStorage.getItem('currentPhase');
+        if (localStorage.getItem('currentPhaseParticipants')) currentPhaseParticipants = JSON.parse(localStorage.getItem('currentPhaseParticipants'));
+        if (localStorage.getItem('losersSemifinal')) losersSemifinal = JSON.parse(localStorage.getItem('losersSemifinal'));
+        if (localStorage.getItem('finalParticipants')) finalParticipants = JSON.parse(localStorage.getItem('finalParticipants'));
+        if (localStorage.getItem('thirdPlaceWinner')) thirdPlaceWinner = JSON.parse(localStorage.getItem('thirdPlaceWinner'));
+        if (localStorage.getItem('groups')) groups = JSON.parse(localStorage.getItem('groups'));
+        if (localStorage.getItem('h2hMatches')) h2hMatches = JSON.parse(localStorage.getItem('h2hMatches'));
 
         updateTournamentNumber();
         renderChampionHistory();
@@ -342,31 +361,89 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     };
 
-    const generateFixtures = () => {
-        return [
-            [[0, 1], [2, 3]], 
-            [[0, 2], [1, 3]], 
-            [[0, 3], [1, 2]]  
-        ];
+    const recordMatchH2H = (teamA, teamB, golesA, golesB, phaseName) => {
+        const key = [teamA.alt, teamB.alt].sort().join(" vs ");
+        if (!h2hMatches[key]) h2hMatches[key] = [];
+        h2hMatches[key].push({
+            tNum: tournamentNumber, phase: phaseName,
+            teamA: teamA.alt, teamB: teamB.alt, gA: golesA, gB: golesB
+        });
+    };
+
+    const showTeamProfile = (teamAlt, teamSrc) => {
+        fullscreenContainer.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = teamSrc;
+        fullscreenContainer.appendChild(img);
+
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+        card.innerHTML = `<h3>Historial de ${teamAlt}</h3>`;
+
+        const scrollContainer = document.createElement('div');
+        scrollContainer.className = 'stats-scroll';
+
+        let matchCount = 0;
+        let summary = {};
+
+        Object.keys(h2hMatches).forEach(key => {
+            if (key.includes(teamAlt)) {
+                h2hMatches[key].forEach(m => {
+                    matchCount++;
+                    const opponent = m.teamA === teamAlt ? m.teamB : m.teamA;
+                    const misGoles = m.teamA === teamAlt ? m.gA : m.gB;
+                    const susGoles = m.teamA === teamAlt ? m.gB : m.gA;
+                    
+                    let resultado = "Empate";
+                    if (misGoles > susGoles) resultado = "Ganó";
+                    if (misGoles < susGoles) resultado = "Perdió";
+
+                    if (!summary[opponent]) {
+                        summary[opponent] = { jugados: 0, ganados: 0, perdidos: 0, empatados: 0 };
+                    }
+                    summary[opponent].jugados++;
+                    if (resultado === "Ganó") summary[opponent].ganados++;
+                    if (resultado === "Perdió") summary[opponent].perdidos++;
+                    if (resultado === "Empate") summary[opponent].empatados++;
+
+                    const row = document.createElement('div');
+                    row.className = 'stats-row';
+                    row.innerHTML = `
+                        <span><b>T${m.tNum.toString().padStart(3,'0')}</b> - ${m.phase}</span>
+                        <span>vs ${opponent} <b>(${misGoles}-${susGoles})</b> [${resultado}]</span>
+                    `;
+                    scrollContainer.appendChild(row);
+                });
+            }
+        });
+
+        if (matchCount === 0) {
+            scrollContainer.innerHTML = `<div style="text-align:center;color:#aaa;padding:10px;">Sin enfrentamientos grabados.</div>`;
+        } else {
+            let totalGanados = Object.values(summary).reduce((a, b) => a + b.ganados, 0);
+            const summaryHeader = document.createElement('div');
+            summaryHeader.style.cssText = "margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid #ffd700; font-size:11px; color:#4ad66d;";
+            summaryHeader.innerHTML = `Total partidos: ${matchCount} | Victorias: ${totalGanados}`;
+            card.insertBefore(summaryHeader, card.firstChild);
+        }
+
+        card.appendChild(scrollContainer);
+        fullscreenContainer.appendChild(card);
+        fullscreenContainer.style.display = 'flex';
     };
 
     const loadGroups = () => {
-        groups = []; 
+        groups = []; losersSemifinal = []; finalParticipants = []; thirdPlaceWinner = null;
         const shuffledImages = shuffleArray([...images]);
         
         for (let i = 0; i < 8; i++) {
             const groupTeams = shuffledImages.slice(i * 4, (i + 1) * 4).map(img => ({
-                src: img.src,
-                alt: img.alt,
-                pts: 0, dg: 0, gf: 0, gc: 0
+                src: img.src, alt: img.alt, pts: 0, dg: 0, gf: 0, gc: 0
             }));
-
             groups.push({
-                name: groupNames[i],
-                teams: groupTeams,
-                round: 0, 
-                fixtures: generateFixtures(),
-                ticker: [] 
+                name: groupNames[i], teams: groupTeams, round: 0,
+                fixtures: [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]],
+                ticker: []
             });
         }
         currentPhase = 'groups';
@@ -378,8 +455,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderGroupsFromState = () => {
         currentPhase = 'groups';
         phaseTitle.textContent = 'Fase de Grupos';
-        leftGroups.innerHTML = '';
-        rightGroups.innerHTML = '';
+        leftGroups.innerHTML = ''; rightGroups.innerHTML = '';
+        deleteBtn.textContent = "Jugar";
+        deleteBtn.style.backgroundColor = "#e63946";
         
         groups.forEach((group, i) => {
             const groupDiv = document.createElement('div');
@@ -396,17 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const table = document.createElement('table');
             table.className = 'group-table';
-            table.innerHTML = `
-                <thead>
-                    <tr>
-                        <th style="text-align:left;">Equipo</th>
-                        <th>PTS</th>
-                        <th>DG</th>
-                        <th>GF</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            `;
+            table.innerHTML = `<thead><tr><th style="text-align:left;">Equipo</th><th>PTS</th><th>DG</th><th>GF</th></tr></thead><tbody></tbody>`;
             
             const tbody = table.querySelector('tbody');
             sortedTeams.forEach((team, idx) => {
@@ -424,10 +492,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
 
                 tr.querySelector('.view-img').addEventListener('click', () => {
-                    fullscreenContainer.innerHTML = `<img src="${team.src}" alt="${team.alt}">`;
-                    fullscreenContainer.style.display = 'flex';
+                    showTeamProfile(team.alt, team.src);
                 });
-
                 tbody.appendChild(tr);
             });
 
@@ -452,9 +518,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         phaseTitle.textContent = {
             'octavos': 'Octavos de Final', 'cuartos': 'Cuartos de Final',
-            'semifinales': 'Semifinales', 'final': 'Final'
+            'semifinales': 'Semifinales', 'tercer-puesto': 'Tercer y Cuarto Puesto', 'final': 'Gran Final'
         }[phase];
         
+        if(phase === 'tercer-puesto') {
+            deleteBtn.textContent = "Jugar 3er Puesto";
+            deleteBtn.style.backgroundColor = "#f4a261";
+        } else if(phase === 'final') {
+            deleteBtn.textContent = "Jugar Gran Final";
+            deleteBtn.style.backgroundColor = "#ffd700";
+            deleteBtn.style.color = "#000";
+        } else {
+            deleteBtn.textContent = "Jugar";
+            deleteBtn.style.backgroundColor = "#e63946";
+            deleteBtn.style.color = "#fff";
+        }
+
         leftGroups.innerHTML = ''; rightGroups.innerHTML = '';
         
         for (let i = 0; i < participants.length; i += 2) {
@@ -466,15 +545,15 @@ document.addEventListener('DOMContentLoaded', () => {
             galleryDiv.className = 'match-gallery';
             
             matchParticipants.forEach(image => {
-                const imgElement = document.createElement('img');
-                imgElement.src = image.src;
-                imgElement.alt = image.alt;
-                imgElement.setAttribute('data-src', image.src);
-                imgElement.addEventListener('click', () => {
-                    fullscreenContainer.innerHTML = `<img src="${image.src}" alt="${image.alt}">`;
-                    fullscreenContainer.style.display = 'flex';
+                const teamWrapper = document.createElement('div');
+                teamWrapper.className = 'match-team';
+                teamWrapper.innerHTML = `<img src="${image.src}" alt="${image.alt}"><span>${image.alt}</span>`;
+                
+                teamWrapper.querySelector('img').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showTeamProfile(image.alt, image.src);
                 });
-                galleryDiv.appendChild(imgElement);
+                galleryDiv.appendChild(teamWrapper);
             });
             
             matchDiv.appendChild(galleryDiv);
@@ -522,13 +601,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 championList.appendChild(li);
                 li.querySelector('.trophy').addEventListener('click', () => {
-                    fullscreenContainer.innerHTML = `<img src="${champion.src}" alt="${champion.alt}">`;
-                    fullscreenContainer.style.display = 'flex';
+                    showTeamProfile(champion.alt, champion.src);
                 });
             });
     };
 
-    // --- LÓGICA PRINCIPAL (Jugar) ---
     deleteBtn.addEventListener('click', () => {
         if (currentPhase === 'groups') {
             if (groups[0].round >= 3) {
@@ -541,7 +618,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     octavosParticipants.push(sorted[0], sorted[1]); 
                 });
-                
                 loadEliminatories('octavos', shuffleArray(octavosParticipants));
                 return;
             }
@@ -560,18 +636,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     teamA.gf += golesA; teamA.gc += golesB; teamA.dg = teamA.gf - teamA.gc;
                     teamB.gf += golesB; teamB.gc += golesA; teamB.dg = teamB.gf - teamB.gc;
 
-                    if (golesA > golesB) {
-                        teamA.pts += 3;
-                    } else if (golesB > golesA) {
-                        teamB.pts += 3;
-                    } else {
-                        teamA.pts += 1;
-                        teamB.pts += 1;
-                    }
+                    if (golesA > golesB) teamA.pts += 3;
+                    else if (golesB > golesA) teamB.pts += 3;
+                    else { teamA.pts += 1; teamB.pts += 1; }
 
+                    recordMatchH2H(teamA, teamB, golesA, golesB, `Grupo`);
                     group.ticker.push(`${teamA.alt} ${golesA} - ${golesB} ${teamB.alt}`);
                 });
-
                 group.round++;
             });
 
@@ -584,41 +655,61 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } else {
-            deleteBtn.textContent = "Jugar";
-            deleteBtn.style.backgroundColor = "#e63946";
-
             let allMatchesElements = document.querySelectorAll('.match-gallery');
             let winners = [];
-            
-            Array.from(allMatchesElements).forEach((matchElement) => {
-                const images = matchElement.querySelectorAll('img:not(.eliminated)');
-                if (images.length > 1) {
-                    const randomIndex = Math.floor(Math.random() * images.length);
-                    const eliminatedImageElement = images[randomIndex];
-                    const winnerIndex = 1 - randomIndex; 
-                    const winnerImageElement = images[winnerIndex];
-                    
-                    eliminatedImageElement.classList.add('eliminated');
-                    winners.push({ src: winnerImageElement.getAttribute('data-src'), alt: winnerImageElement.alt });
-                    setTimeout(() => { eliminatedImageElement.remove(); }, 500);
-                } else if (images.length === 1) {
-                    winners.push({ src: images[0].getAttribute('data-src'), alt: images[0].alt });
+            let currentLosers = [];
+
+            allMatchesElements.forEach((matchElement) => {
+                const teams = matchElement.querySelectorAll('.match-team');
+                if (teams.length === 2) {
+                    const teamAElement = teams[0];
+                    const teamBElement = teams[1];
+                    const imgA = teamAElement.querySelector('img');
+                    const imgB = teamBElement.querySelector('img');
+
+                    const altA = imgA.alt; const srcA = imgA.src;
+                    const altB = imgB.alt; const srcB = imgB.src;
+
+                    let gA = Math.floor(Math.random() * 4);
+                    let gB = Math.floor(Math.random() * 4);
+                    if (gA === gB) { 
+                        if (Math.random() > 0.5) gA++; else gB++;
+                    }
+
+                    recordMatchH2H({alt: altA}, {alt: altB}, gA, gB, phaseTitle.textContent);
+
+                    if (gA > gB) {
+                        teamBElement.classList.add('eliminated');
+                        winners.push({ src: srcA, alt: altA });
+                        currentLosers.push({ src: srcB, alt: altB });
+                    } else {
+                        teamAElement.classList.add('eliminated');
+                        winners.push({ src: srcB, alt: altB });
+                        currentLosers.push({ src: srcA, alt: altA });
+                    }
                 }
             });
 
             setTimeout(() => {
-                if (currentPhase === 'octavos' && winners.length === 8) {
+                if (currentPhase === 'octavos') {
                     loadEliminatories('cuartos', shuffleArray(winners));
-                } else if (currentPhase === 'cuartos' && winners.length === 4) {
+                } else if (currentPhase === 'cuartos') {
                     loadEliminatories('semifinales', shuffleArray(winners));
-                } else if (currentPhase === 'semifinales' && winners.length === 2) {
-                    loadEliminatories('final', winners);
-                } else if (currentPhase === 'final' && winners.length === 1) {
+                } else if (currentPhase === 'semifinales') {
+                    losersSemifinal = currentLosers; 
+                    finalParticipants = winners; 
+                    loadEliminatories('tercer-puesto', losersSemifinal);
+                } else if (currentPhase === 'tercer-puesto') {
+                    thirdPlaceWinner = winners[0]; 
+                    loadEliminatories('final', finalParticipants);
+                } else if (currentPhase === 'final') {
                     const winner = winners[0];
                     fullscreenContainer.innerHTML = `
                         <img src="${winner.src}" alt="${winner.alt}">
-                        <h2>¡${winner.alt} es el CAMPEÓN del Torneo ${tournamentNumber.toString().padStart(3, '0')}!</h2>
-                        <button id="restart-btn">Nuevo Campeonato</button>`;
+                        <h2>¡${winner.alt} es el CAMPEÓN!</h2>
+                        <p style="color:#ffd700; margin-top:10px; font-size: 16px;">🥉 3er Puesto: ${thirdPlaceWinner ? thirdPlaceWinner.alt : 'N/A'}</p>
+                        <button id="restart-btn">Nuevo Campeonato</button>
+                    `;
                     fullscreenContainer.style.display = 'flex';
                     updateChampionHistory(winner); 
                     
@@ -626,37 +717,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         fullscreenContainer.style.display = 'none';
                         loadGroups(); 
                     });
-                } else {
-                    loadEliminatories(currentPhase, winners);
                 }
             }, 600);
         }
     });
 
     fullscreenContainer.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'BUTTON' && e.target.id !== 'restart-btn' && e.target.tagName !== 'IMG') {
+        if (e.target.tagName !== 'BUTTON' && e.target.id !== 'restart-btn' && e.target.tagName !== 'IMG' && !e.target.closest('.profile-card')) {
             fullscreenContainer.style.display = 'none';
         }
     });
 
-    const initializeApp = () => {
-        loadFromLocalStorage();
-        if (currentPhase === 'groups') {
-            if (groups.length === 0) {
-                 loadGroups();
-            } else {
-                renderGroupsFromState();
-                if (groups[0].round >= 3) {
-                    deleteBtn.textContent = "Ir a Octavos";
-                    deleteBtn.style.backgroundColor = "#4ad66d";
-                }
+    loadFromLocalStorage();
+    if (currentPhase === 'groups') {
+        if (groups.length === 0) loadGroups();
+        else {
+            renderGroupsFromState();
+            if (groups[0].round >= 3) {
+                deleteBtn.textContent = "Ir a Octavos";
+                deleteBtn.style.backgroundColor = "#4ad66d";
             }
-        } else {
-            loadEliminatories(currentPhase, currentPhaseParticipants);
         }
-    };
-
-    initializeApp();
+    } else {
+        loadEliminatories(currentPhase, currentPhaseParticipants);
+    }
 });
     </script>
 </body>
