@@ -151,10 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let championsData = {}; 
     let h2hMatches = {}; 
     let teamPositionsHistory = {}; 
-    let globalTournamentsLog = {}; // Guarda { torneoNum: [lista de 32 ordenados] }
+    let globalTournamentsLog = {}; 
+    let liveStats = {};
 
     const groupNames = ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo D', 'Grupo E', 'Grupo F', 'Grupo G', 'Grupo H'];
-    let liveStats = {};
 
     const initLiveStats = () => {
         liveStats = {};
@@ -229,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let teamArray = Object.keys(liveStats).map(name => ({ ...liveStats[name] }));
         let finalPositionsOrdered = [];
 
-        // 1 al 4
         finalPositionsOrdered.push({ name: championTeam.alt, src: championTeam.src, pos: 1, info: 'Campeón' });
         finalPositionsOrdered.push({ name: subchampionTeam.alt, src: subchampionTeam.src, pos: 2, info: 'Subcampeón' });
         finalPositionsOrdered.push({ name: thirdTeam.alt, src: thirdTeam.src, pos: 3, info: '3er Puesto' });
@@ -241,19 +240,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return b.gf - a.gf;
         };
 
-        // 5 al 8 (Cuartos)
         let cuartos = teamArray.filter(t => t.stage === 'Cuartos de Final').sort(sortByPerformance);
         cuartos.forEach((t, i) => finalPositionsOrdered.push({ name: t.alt, src: t.src, pos: 5 + i, info: 'Cuartos' }));
 
-        // 9 al 16 (Octavos)
         let octavos = teamArray.filter(t => t.stage === 'Octavos de Final').sort(sortByPerformance);
         octavos.forEach((t, i) => finalPositionsOrdered.push({ name: t.alt, src: t.src, pos: 9 + i, info: 'Octavos' }));
 
-        // 17 al 32 (Grupos)
         let gruposElims = teamArray.filter(t => t.stage === 'Fase de Grupos' && t.alt !== championTeam.alt && t.alt !== subchampionTeam.alt && t.alt !== thirdTeam.alt && t.alt !== fourthTeam.alt).sort(sortByPerformance);
         gruposElims.forEach((t, i) => finalPositionsOrdered.push({ name: t.alt, src: t.src, pos: 17 + i, info: 'Grupos' }));
 
-        // Guardar en el log global y por equipo
         globalTournamentsLog[tournamentNumber] = finalPositionsOrdered;
         
         finalPositionsOrdered.forEach(item => {
@@ -295,7 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const misGoles = m.teamA === teamAlt ? m.gA : m.gB;
                         const susGoles = m.teamA === teamAlt ? m.gB : m.gA;
                         
-                        // Buscar imagen del rival
                         const oppImg = images.find(i => i.alt === opponent)?.src || 'img1.jpg';
                         
                         let resultado = "Empate";
@@ -373,9 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
         globalTournamentsLog[val].forEach(item => {
             const li = document.createElement('li');
             li.className = 'pos-li';
-            let decoration = '';
-            if(item.pos === 1) decoration = 'background: rgba(255,215,0,0.1); border: 1px solid #ffd700;';
-            if(decoration) li.style.cssText = decoration;
+            if(item.pos === 1) li.style.cssText = 'background: rgba(255,215,0,0.1); border: 1px solid #ffd700;';
 
             li.innerHTML = `
                 <div class="left-info">
@@ -389,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Control de pestañas del cuadro inferior
     tabShowChamps.addEventListener('click', () => {
         tabShowTournaments.classList.remove('active'); tabShowChamps.classList.add('active');
         paneTournaments.style.display = 'none'; paneChamps.style.display = 'block';
@@ -443,10 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(tr);
             });
             groupDiv.appendChild(table);
-            if (group.ticker.length > 0) {
-                const tickerDiv = document.createElement('div'); tickerDiv.className = 'ticker-container';
-                tickerDiv.innerHTML = group.ticker.map(t => `<div>${t}</div>`).join(''); groupDiv.appendChild(tickerDiv);
-            }
             if (i % 2 === 0) leftGroups.appendChild(groupDiv); else rightGroups.appendChild(groupDiv);
         });
     };
@@ -522,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let octavosParticipants = [];
                 groups.forEach(group => {
                     const sorted = [...group.teams].sort((a, b) => (b.pts !== a.pts) ? b.pts - a.pts : (b.dg !== a.dg) ? b.dg - a.dg : b.gf - a.gf);
-                    octavosParticipants.push(sorted[0], sorted[1]); 
+                    octavosParticipants.push({ src: sorted[0].src, alt: sorted[0].alt }, { src: sorted[1].src, alt: sorted[1].alt }); 
                     liveStats[sorted[2].alt].stage = 'Fase de Grupos'; liveStats[sorted[3].alt].stage = 'Fase de Grupos';
                 });
                 loadEliminatories('octavos', shuffleArray(octavosParticipants)); return;
@@ -548,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const imgA = teams[0].querySelector('img'), imgB = teams[1].querySelector('img');
                     let gA = Math.floor(Math.random() * 4), gB = Math.floor(Math.random() * 4);
                     if (gA === gB) { if (Math.random() > 0.5) gA++; else gB++; }
-                    recordMatchH2H({alt: imgA.alt}, {alt: imgB.alt}, gA, gB, phaseTitle.textContent);
+                    recordMatchH2H({src: imgA.src, alt: imgA.alt}, {src: imgB.src, alt: imgB.alt}, gA, gB, phaseTitle.textContent);
                     if (gA > gB) {
                         teams[1].classList.add('eliminated'); winners.push({ src: imgA.src, alt: imgA.alt }); currentLosers.push({ src: imgB.src, alt: imgB.alt });
                         if(currentPhase === 'octavos') liveStats[imgB.alt].stage = 'Octavos de Final'; if(currentPhase === 'cuartos') liveStats[imgB.alt].stage = 'Cuartos de Final';
@@ -584,9 +571,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     fullscreenContainer.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON' && e.target.id !== 'restart-btn' && e.target.tagName !== 'IMG' && !e.target.closest('.profile-card')) fullscreenContainer.style.display = 'none'; });
+    
+    // Ejecución inicial de carga
     loadFromLocalStorage();
-    if (currentPhase === 'groups') { if (groups.length === 0) loadGroups(); else { renderGroupsFromState(); if (groups[0].round >= 3) { deleteBtn.textContent = "Ir a Octavos"; deleteBtn.style.backgroundColor = "#4ad66d"; } } }
-    else loadEliminatories(currentPhase, currentPhaseParticipants);
+    if (currentPhase === 'groups') { 
+        if (groups.length === 0) loadGroups(); 
+        else { 
+            renderGroupsFromState(); 
+            if (groups[0].round >= 3) { deleteBtn.textContent = "Ir a Octavos"; deleteBtn.style.backgroundColor = "#4ad66d"; } 
+        } 
+    } else { 
+        loadEliminatories(currentPhase, currentPhaseParticipants); 
+    }
 });
     </script>
 </body>
