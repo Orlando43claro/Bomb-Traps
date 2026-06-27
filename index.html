@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
         body { background-color: #121212; color: #fff; text-align: center; padding: 15px; min-height: 100vh; }
-        h1 { margin-bottom: 15px; font-size: clamp(1.5em, 5vw, 2.5em); color: #ffd700; }
+        h1 { margin-bottom: 5px; font-size: clamp(1.5em, 5vw, 2.5em); color: #ffd700; }
         h2 { color: #ffd700; margin-bottom: 15px; font-size: clamp(1.2em, 4vw, 1.6em); }
         #phase-title { margin-bottom: 15px; font-size: clamp(1.2em, 4vw, 1.8em); color: #ffd700; }
         
@@ -31,8 +31,15 @@
         .match-team.eliminated img { opacity: 0.2; }
         .match-team span { font-size: 12px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         
-        #delete-btn { position: fixed; bottom: 15px; right: 15px; background-color: #e63946; color: white; border: none; padding: clamp(10px, 2vw, 15px); font-size: clamp(14px, 3vw, 18px); border-radius: 50%; cursor: pointer; z-index: 1000; }
-        
+        .match-score-text { font-size: 14px; font-weight: bold; color: #ffd700; margin-top: 4px; }
+        .match-detail-mode { font-size: 10px; color: #aaa; display: block; }
+
+        .controls-wrapper { position: fixed; bottom: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: flex-end; }
+        .action-btn { background-color: #e63946; color: white; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 25px; cursor: pointer; boxShadow: 0 4px 10px rgba(0,0,0,0.5); transition: background 0.2s, transform 0.1s; }
+        .action-btn:active { transform: scale(0.95); }
+        .reset-btn-global { background-color: #333; color: #aaa; border: 1px solid #555; padding: 6px 12px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+        .reset-btn-global:hover { background-color: #e63946; color: white; border-color: #e63946; }
+
         #fullscreen-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.96); align-items: center; justify-content: center; flex-direction: column; z-index: 2000; padding: 20px; }
         #fullscreen-container img { max-width: 80%; max-height: 25%; border-radius: 8px; }
         
@@ -47,8 +54,7 @@
         .stats-row-left { display: flex; align-items: center; gap: 6px; }
         .stats-row img { width: 18px; height: 18px; object-fit: cover; border-radius: 2px; }
         
-        .ticker-container { background: rgba(0, 0, 0, 0.4); padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 11px; color: #ccc; text-align: left; max-height: 80px; overflow-y: auto; }
-        #restart-btn { margin-top: 15px; padding: 8px 15px; background: #f4a261; border: none; color: white; border-radius: 4px; cursor: pointer; }
+        #restart-btn { margin-top: 15px; padding: 8px 15px; background: #f4a261; border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
         .history-section { max-width: 700px; margin: 30px auto 0; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
         .history-tabs { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; }
@@ -83,7 +89,11 @@
         <div id="right-groups"></div>
     </div>
     
-    <button id="delete-btn">Jugar</button>
+    <div class="controls-wrapper">
+        <button id="delete-btn" class="action-btn">Jugar Jornada</button>
+        <button id="master-reset-btn" class="reset-btn-global">Reiniciar Historial</button>
+    </div>
+
     <div id="fullscreen-container"></div>
     
     <div class="history-section">
@@ -110,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftGroups = document.getElementById('left-groups');
     const rightGroups = document.getElementById('right-groups');
     const deleteBtn = document.getElementById('delete-btn');
+    const masterResetBtn = document.getElementById('master-reset-btn');
     const fullscreenContainer = document.getElementById('fullscreen-container');
     const championList = document.getElementById('champion-list');
     const phaseTitle = document.getElementById('phase-title');
@@ -121,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const paneTournaments = document.getElementById('pane-tournaments');
     const tournamentSelect = document.getElementById('tournament-select');
     const tournamentPositionsList = document.getElementById('tournament-positions-list');
+
+    const defaultImgSrc = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'><rect width='50' height='50' fill='%23333'/><circle cx='25' cy='25' r='15' fill='none' stroke='%23555' stroke-width='2'/><path d='M25 10 L25 40 M10 25 L40 25' stroke='%23555' stroke-width='1'/></svg>";
 
     const images = [
         { src: "img1.jpg", alt: "Part. 1" }, { src: "img2.jpg", alt: "Part. 2" },
@@ -153,8 +166,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let teamPositionsHistory = {}; 
     let globalTournamentsLog = {}; 
     let liveStats = {};
+    let phaseMatchesPlayed = false; 
 
     const groupNames = ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo D', 'Grupo E', 'Grupo F', 'Grupo G', 'Grupo H'];
+
+    const fixImgSrc = (imgEl) => {
+        imgEl.onerror = () => { imgEl.src = defaultImgSrc; imgEl.onerror = null; };
+    };
+
+    const getTeamStars = (teamAlt) => {
+        let stars = 0;
+        Object.values(championsData).forEach(champ => {
+            if (champ.alt === teamAlt) stars = champ.count || 0;
+        });
+        return stars;
+    };
+
+    const simulateScore = (teamAName, teamBName) => {
+        const starsA = getTeamStars(teamAName);
+        const starsB = getTeamStars(teamBName);
+        
+        let bonusA = Math.min(starsA * 0.15, 0.6);
+        let bonusB = Math.min(starsB * 0.15, 0.6);
+
+        let gA = Math.floor(Math.random() * 4 + bonusA);
+        let gB = Math.floor(Math.random() * 4 + bonusB);
+        return { gA, gB };
+    };
 
     const initLiveStats = () => {
         liveStats = {};
@@ -175,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('h2hMatches', JSON.stringify(h2hMatches));
         localStorage.setItem('teamPositionsHistory', JSON.stringify(teamPositionsHistory));
         localStorage.setItem('globalTournamentsLog', JSON.stringify(globalTournamentsLog));
+        localStorage.setItem('phaseMatchesPlayed', phaseMatchesPlayed ? 'true' : 'false');
     };
 
     const loadFromLocalStorage = () => {
@@ -189,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (localStorage.getItem('h2hMatches')) h2hMatches = JSON.parse(localStorage.getItem('h2hMatches'));
         if (localStorage.getItem('teamPositionsHistory')) teamPositionsHistory = JSON.parse(localStorage.getItem('teamPositionsHistory'));
         if (localStorage.getItem('globalTournamentsLog')) globalTournamentsLog = JSON.parse(localStorage.getItem('globalTournamentsLog'));
+        if (localStorage.getItem('phaseMatchesPlayed')) phaseMatchesPlayed = localStorage.getItem('phaseMatchesPlayed') === 'true';
 
         updateTournamentNumber();
         renderChampionHistory();
@@ -211,18 +251,18 @@ document.addEventListener('DOMContentLoaded', () => {
             teamA: teamA.alt, teamB: teamB.alt, gA: golesA, gB: golesB
         });
 
-        if (liveStats[teamA.alt]) {
-            liveStats[teamA.alt].gf += golesA;
-            liveStats[teamA.alt].dg += (golesA - golesB);
-            if (golesA > golesB) liveStats[teamA.alt].pts += 3;
-            else if (golesA === golesB && phaseName.includes("Grupo")) liveStats[teamA.alt].pts += 1;
-        }
-        if (liveStats[teamB.alt]) {
-            liveStats[teamB.alt].gf += golesB;
-            liveStats[teamB.alt].dg += (golesB - golesA);
-            if (golesB > golesA) liveStats[teamB.alt].pts += 3;
-            else if (golesA === golesB && phaseName.includes("Grupo")) liveStats[teamB.alt].pts += 1;
-        }
+        if (!liveStats[teamA.alt]) liveStats[teamA.alt] = { src: teamA.src, alt: teamA.alt, pts: 0, dg: 0, gf: 0, stage: 'Fase de Grupos' };
+        if (!liveStats[teamB.alt]) liveStats[teamB.alt] = { src: teamB.src, alt: teamB.alt, pts: 0, dg: 0, gf: 0, stage: 'Fase de Grupos' };
+
+        liveStats[teamA.alt].gf += golesA;
+        liveStats[teamA.alt].dg += (golesA - golesB);
+        if (golesA > golesB) liveStats[teamA.alt].pts += 3;
+        else if (golesA === golesB && currentPhase === 'groups') liveStats[teamA.alt].pts += 1;
+
+        liveStats[teamB.alt].gf += golesB;
+        liveStats[teamB.alt].dg += (golesB - golesA);
+        if (golesB > golesA) liveStats[teamB.alt].pts += 3;
+        else if (golesA === golesB && currentPhase === 'groups') liveStats[teamB.alt].pts += 1;
     };
 
     const calculateAndSaveFinalPositions = (championTeam, subchampionTeam, thirdTeam, fourthTeam) => {
@@ -261,12 +301,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fullscreenContainer.innerHTML = '';
         const img = document.createElement('img');
         img.src = teamSrc;
+        fixImgSrc(img);
         fullscreenContainer.appendChild(img);
 
         const card = document.createElement('div');
         card.className = 'profile-card';
         card.innerHTML = `
-            <h3>${teamAlt}</h3>
+            <h3>${teamAlt} ${'⭐'.repeat(getTeamStars(teamAlt))}</h3>
             <div class="profile-tabs">
                 <button class="tab-btn active" id="btn-tab-h2h">Enfrentamientos</button>
                 <button class="tab-btn" id="btn-tab-pos">Posiciones</button>
@@ -290,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const misGoles = m.teamA === teamAlt ? m.gA : m.gB;
                         const susGoles = m.teamA === teamAlt ? m.gB : m.gA;
                         
-                        const oppImg = images.find(i => i.alt === opponent)?.src || 'img1.jpg';
+                        const oppImg = images.find(i => i.alt === opponent)?.src || defaultImgSrc;
                         
                         let resultado = "Empate";
                         if (misGoles > susGoles) { resultado = "Ganó"; wins++; }
@@ -300,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempHTML += `
                             <div class="stats-row">
                                 <div class="stats-row-left">
-                                    <img src="${oppImg}">
+                                    <img src="${oppImg}" class="opp-mini-img">
                                     <span><b>T${m.tNum.toString().padStart(3,'0')}</b> - ${m.phase.split(' ')[0]}</span>
                                 </div>
                                 <span>vs ${opponent} <b>(${misGoles}-${susGoles})</b> [${resultado}]</span>
@@ -321,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let bodyWrap = document.createElement('div');
                 bodyWrap.innerHTML = tempHTML;
+                bodyWrap.querySelectorAll('.opp-mini-img').forEach(fixImgSrc);
                 scrollContainer.appendChild(bodyWrap);
             }
         };
@@ -377,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <span style="font-size: 11px; color:#aaa;">(${item.info})</span>
             `;
+            fixImgSrc(li.querySelector('.list-img'));
             tournamentPositionsList.appendChild(li);
         });
     });
@@ -392,15 +435,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadGroups = () => {
         groups = []; losersSemifinal = []; finalParticipants = []; thirdPlaceWinner = null;
+        phaseMatchesPlayed = false;
         initLiveStats();
         const shuffledImages = shuffleArray([...images]);
         for (let i = 0; i < 8; i++) {
             const groupTeams = shuffledImages.slice(i * 4, (i + 1) * 4).map(img => ({
-                src: img.src, alt: img.alt, pts: 0, dg: 0, gf: 0, gc: 0
+                src: img.src, alt: img.alt, pts: 0, dg: 0, gf: 0, gc: 0, matchScores: ["-", "-", "-"]
             }));
             groups.push({
                 name: groupNames[i], teams: groupTeams, round: 0,
-                fixtures: [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]], ticker: []
+                fixtures: [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]]
             });
         }
         currentPhase = 'groups';
@@ -410,7 +454,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderGroupsFromState = () => {
         currentPhase = 'groups'; phaseTitle.textContent = 'Fase de Grupos';
         leftGroups.innerHTML = ''; rightGroups.innerHTML = '';
-        deleteBtn.textContent = "Jugar"; deleteBtn.style.backgroundColor = "#e63946";
+        
+        if (groups[0].round >= 3) {
+            deleteBtn.textContent = "Ir a Octavos";
+            deleteBtn.style.backgroundColor = "#4ad66d";
+            deleteBtn.style.color = "#000";
+        } else {
+            deleteBtn.textContent = `Jugar Jornada ${groups[0].round + 1}`;
+            deleteBtn.style.backgroundColor = "#e63946";
+            deleteBtn.style.color = "#fff";
+        }
         
         groups.forEach((group, i) => {
             const groupDiv = document.createElement('div');
@@ -430,7 +483,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tr = document.createElement('tr');
                 if (group.round >= 3 && idx < 2) tr.className = 'classified';
                 tr.innerHTML = `<td class="team-name"><img src="${team.src}" alt="${team.alt}" class="view-img"><span>${team.alt}</span></td><td><b>${team.pts}</b></td><td>${team.dg > 0 ? '+'+team.dg : team.dg}</td><td>${team.gf}</td>`;
-                tr.querySelector('.view-img').addEventListener('click', () => showTeamProfile(team.alt, team.src));
+                const vImg = tr.querySelector('.view-img');
+                fixImgSrc(vImg);
+                vImg.addEventListener('click', () => showTeamProfile(team.alt, team.src));
                 tbody.appendChild(tr);
             });
             groupDiv.appendChild(table);
@@ -442,9 +497,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPhase = phase; currentPhaseParticipants = participants; saveToLocalStorage();
         phaseTitle.textContent = { 'octavos': 'Octavos de Final', 'cuartos': 'Cuartos de Final', 'semifinales': 'Semifinales', 'tercer-puesto': 'Tercer y Cuarto Puesto', 'final': 'Gran Final' }[phase];
         
-        if(phase === 'tercer-puesto') { deleteBtn.textContent = "Jugar 3er Puesto"; deleteBtn.style.backgroundColor = "#f4a261"; }
-        else if(phase === 'final') { deleteBtn.textContent = "Jugar Gran Final"; deleteBtn.style.backgroundColor = "#ffd700"; deleteBtn.style.color = "#000"; }
-        else { deleteBtn.textContent = "Jugar"; deleteBtn.style.backgroundColor = "#e63946"; deleteBtn.style.color = "#fff"; }
+        if (phaseMatchesPlayed) {
+            deleteBtn.textContent = phase === 'final' ? "Ver Coronación" : "Siguiente Ronda";
+            deleteBtn.style.backgroundColor = "#4ad66d";
+            deleteBtn.style.color = "#000";
+        } else {
+            if(phase === 'tercer-puesto') { deleteBtn.textContent = "Jugar 3er Puesto"; deleteBtn.style.backgroundColor = "#f4a261"; deleteBtn.style.color = "#fff"; }
+            else if(phase === 'final') { deleteBtn.textContent = "Jugar Gran Final"; deleteBtn.style.backgroundColor = "#ffd700"; deleteBtn.style.color = "#000"; }
+            else { deleteBtn.textContent = "Jugar Cruces"; deleteBtn.style.backgroundColor = "#e63946"; deleteBtn.style.color = "#fff"; }
+        }
 
         leftGroups.innerHTML = ''; rightGroups.innerHTML = '';
         for (let i = 0; i < participants.length; i += 2) {
@@ -454,8 +515,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             matchParticipants.forEach(image => {
                 const teamWrapper = document.createElement('div'); teamWrapper.className = 'match-team';
-                teamWrapper.innerHTML = `<img src="${image.src}" alt="${image.alt}"><span>${image.alt}</span>`;
-                teamWrapper.querySelector('img').addEventListener('click', (e) => { e.stopPropagation(); showTeamProfile(image.alt, image.src); });
+                if (phaseMatchesPlayed && image.eliminated) teamWrapper.className = 'match-team eliminated';
+                
+                let scoreHtml = '';
+                if (phaseMatchesPlayed && image.scoreStr !== undefined) {
+                    scoreHtml = `<div class="match-score-text">${image.scoreStr}</div>`;
+                    if (image.detailMode) scoreHtml += `<span class="match-detail-mode">${image.detailMode}</span>`;
+                }
+
+                teamWrapper.innerHTML = `<img src="${image.src}" alt="${image.alt}"><span>${image.alt}</span>${scoreHtml}`;
+                const mImg = teamWrapper.querySelector('img');
+                fixImgSrc(mImg);
+                mImg.addEventListener('click', (e) => { e.stopPropagation(); showTeamProfile(image.alt, image.src); });
                 galleryDiv.appendChild(teamWrapper);
             });
             matchDiv.appendChild(galleryDiv);
@@ -476,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             championsData[winnerKey].championedTournaments.sort((a, b) => a - b);
         }
         tournamentNumber++;
+        phaseMatchesPlayed = false;
         saveToLocalStorage(); renderChampionHistory(); populateTournamentSelect();
     };
 
@@ -498,10 +570,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <span style="font-size:12px; font-weight:bold; color:#ffd700;">${champion.count} Títulos</span>
             `;
+            const tImg = li.querySelector('.trophy');
+            fixImgSrc(tImg);
             championList.appendChild(li);
-            li.querySelector('.trophy').addEventListener('click', () => showTeamProfile(champion.alt, champion.src));
+            tImg.addEventListener('click', () => showTeamProfile(champion.alt, champion.src));
         });
     };
+
+    masterResetBtn.addEventListener('click', () => {
+        if (confirm("¿Estás completamente seguro de que deseas borrar todo el historial de torneos y campeones acumulados?")) {
+            localStorage.clear();
+            tournamentNumber = 1;
+            championsData = {};
+            h2hMatches = {};
+            teamPositionsHistory = {};
+            globalTournamentsLog = {};
+            liveStats = {};
+            loadGroups();
+            renderChampionHistory();
+            populateTournamentSelect();
+        }
+    });
 
     deleteBtn.addEventListener('click', () => {
         if (currentPhase === 'groups') {
@@ -512,12 +601,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     octavosParticipants.push({ src: sorted[0].src, alt: sorted[0].alt }, { src: sorted[1].src, alt: sorted[1].alt }); 
                     liveStats[sorted[2].alt].stage = 'Fase de Grupos'; liveStats[sorted[3].alt].stage = 'Fase de Grupos';
                 });
+                phaseMatchesPlayed = false;
                 loadEliminatories('octavos', shuffleArray(octavosParticipants)); return;
             }
+            
             groups.forEach(group => {
                 group.fixtures[group.round].forEach(match => {
                     const teamA = group.teams[match[0]], teamB = group.teams[match[1]];
-                    let gA = Math.floor(Math.random() * 4), gB = Math.floor(Math.random() * 4);
+                    let scores = simulateScore(teamA.alt, teamB.alt);
+                    let gA = scores.gA, gB = scores.gB;
+                    
                     teamA.gf += gA; teamA.gc += gB; teamA.dg = teamA.gf - teamA.gc;
                     teamB.gf += gB; teamB.gc += gA; teamB.dg = teamB.gf - teamB.gc;
                     if (gA > gB) teamA.pts += 3; else if (gB > gA) teamB.pts += 3; else { teamA.pts += 1; teamB.pts += 1; }
@@ -526,27 +619,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 group.round++;
             });
             saveToLocalStorage(); renderGroupsFromState();
-            if (groups[0].round >= 3) { deleteBtn.textContent = "Ir a Octavos"; deleteBtn.style.backgroundColor = "#4ad66d"; }
         } else {
-            let winners = [], currentLosers = [];
-            document.querySelectorAll('.match-gallery').forEach((matchElement) => {
-                const teams = matchElement.querySelectorAll('.match-team');
-                if (teams.length === 2) {
-                    const imgA = teams[0].querySelector('img'), imgB = teams[1].querySelector('img');
-                    let gA = Math.floor(Math.random() * 4), gB = Math.floor(Math.random() * 4);
-                    if (gA === gB) { if (Math.random() > 0.5) gA++; else gB++; }
-                    recordMatchH2H({src: imgA.src, alt: imgA.alt}, {src: imgB.src, alt: imgB.alt}, gA, gB, phaseTitle.textContent);
-                    if (gA > gB) {
-                        teams[1].classList.add('eliminated'); winners.push({ src: imgA.src, alt: imgA.alt }); currentLosers.push({ src: imgB.src, alt: imgB.alt });
-                        if(currentPhase === 'octavos') liveStats[imgB.alt].stage = 'Octavos de Final'; if(currentPhase === 'cuartos') liveStats[imgB.alt].stage = 'Cuartos de Final';
-                    } else {
-                        teams[0].classList.add('eliminated'); winners.push({ src: imgB.src, alt: imgB.alt }); currentLosers.push({ src: imgA.src, alt: imgA.alt });
-                        if(currentPhase === 'octavos') liveStats[imgA.alt].stage = 'Octavos de Final'; if(currentPhase === 'cuartos') liveStats[imgA.alt].stage = 'Cuartos de Final';
-                    }
-                }
-            });
+            if (phaseMatchesPlayed) {
+                phaseMatchesPlayed = false;
+                let winners = [], currentLosers = [];
+                currentPhaseParticipants.forEach(p => {
+                    if (!p.eliminated) winners.push({ src: p.src, alt: p.alt });
+                    else currentLosers.push({ src: p.src, alt: p.alt });
+                });
 
-            setTimeout(() => {
                 if (currentPhase === 'octavos') loadEliminatories('cuartos', shuffleArray(winners));
                 else if (currentPhase === 'cuartos') loadEliminatories('semifinales', shuffleArray(winners));
                 else if (currentPhase === 'semifinales') { losersSemifinal = currentLosers; finalParticipants = winners; loadEliminatories('tercer-puesto', losersSemifinal); }
@@ -556,30 +637,63 @@ document.addEventListener('DOMContentLoaded', () => {
                     calculateAndSaveFinalPositions(winner, subchampion, thirdPlaceWinner, fourthPlace);
                     
                     fullscreenContainer.innerHTML = `
-                        <img src="${winner.src}">
+                        <img src="${winner.src}" id="crown-win-img">
                         <h2>¡${winner.alt} Campeón!</h2>
                         <div style="font-size:24px; margin: 5px 0;">${'⭐'.repeat((championsData[`${winner.src}:${winner.alt}`]?.count || 0) + 1)}</div>
                         <p style="color:#ffd700; margin-top:5px; font-size:14px;">🥈 Subcampeón: ${subchampion.alt} | 🥉 3er Puesto: ${thirdPlaceWinner.alt}</p>
                         <button id="restart-btn">Nuevo Campeonato</button>
                     `;
+                    fixImgSrc(fullscreenContainer.querySelector('#crown-win-img'));
                     fullscreenContainer.style.display = 'flex';
                     updateChampionHistory(winner);
                     document.getElementById('restart-btn').addEventListener('click', () => { fullscreenContainer.style.display = 'none'; loadGroups(); });
                 }
-            }, 600);
+                return;
+            }
+
+            for (let i = 0; i < currentPhaseParticipants.length; i += 2) {
+                let pA = currentPhaseParticipants[i];
+                let pB = currentPhaseParticipants[i+1];
+                let scores = simulateScore(pA.alt, pB.alt);
+                let gA = scores.gA, gB = scores.gB;
+                let detailMode = "";
+
+                if (gA === gB) {
+                    if (Math.random() > 0.5) {
+                        gA++;
+                        detailMode = Math.random() > 0.5 ? "Prórroga (T.E.)" : "Penales (PEN.)";
+                    } else {
+                        gB++;
+                        detailMode = Math.random() > 0.5 ? "Prórroga (T.E.)" : "Penales (PEN.)";
+                    }
+                }
+
+                recordMatchH2H({src: pA.src, alt: pA.alt}, {src: pB.src, alt: pB.alt}, gA, gB, phaseTitle.textContent);
+                pA.scoreStr = `${gA} - ${gB}`;
+                pB.scoreStr = `${gB} - ${gA}`;
+                if(detailMode) { pA.detailMode = detailMode; pB.detailMode = detailMode; }
+
+                if (gA > gB) {
+                    pB.eliminated = true; pA.eliminated = false;
+                    if(currentPhase === 'octavos') liveStats[pB.alt].stage = 'Octavos de Final'; if(currentPhase === 'cuartos') liveStats[pB.alt].stage = 'Cuartos de Final';
+                } else {
+                    pA.eliminated = true; pB.eliminated = false;
+                    if(currentPhase === 'octavos') liveStats[pA.alt].stage = 'Octavos de Final'; if(currentPhase === 'cuartos') liveStats[pA.alt].stage = 'Cuartos de Final';
+                }
+            }
+
+            phaseMatchesPlayed = true;
+            saveToLocalStorage();
+            loadEliminatories(currentPhase, currentPhaseParticipants);
         }
     });
 
     fullscreenContainer.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON' && e.target.id !== 'restart-btn' && e.target.tagName !== 'IMG' && !e.target.closest('.profile-card')) fullscreenContainer.style.display = 'none'; });
     
-    // Ejecución inicial de carga
     loadFromLocalStorage();
     if (currentPhase === 'groups') { 
         if (groups.length === 0) loadGroups(); 
-        else { 
-            renderGroupsFromState(); 
-            if (groups[0].round >= 3) { deleteBtn.textContent = "Ir a Octavos"; deleteBtn.style.backgroundColor = "#4ad66d"; } 
-        } 
+        else renderGroupsFromState(); 
     } else { 
         loadEliminatories(currentPhase, currentPhaseParticipants); 
     }
